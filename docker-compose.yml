@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: pulsestream-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - pulsestream_mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: pulsestream_analytics
+    networks:
+      - pulsestream-net
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: pulsestream-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - pulsestream_redis_data:/data
+    networks:
+      - pulsestream-net
+
+  pulsestream-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pulsestream-api-server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/pulsestream_analytics
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - pulsestream-net
+
+volumes:
+  pulsestream_mongo_data:
+  pulsestream_redis_data:
+
+networks:
+  pulsestream-net:
+    driver: bridge
