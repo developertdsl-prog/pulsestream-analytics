@@ -10,35 +10,6 @@
 
 PulseStream-Analytics is an enterprise stream compute platform designed for processing millions of unbounded continuous events with strict temporal semantics. It features event-time tracking with watermarking for late-arriving data, deterministic tumbling and sliding window aggregations, sequential pattern detection (CEP), and automated Dead-Letter Queue (DLQ) routing.
 
----
-
-## 🏛️ System Architecture
-
-```mermaid
-flowchart TD
-    Producers[("Event Producers (Sensors, Clickstreams, Payments)")] --> Ingest["High-Throughput Ingestion Gateway"]
-    
-    subgraph BufferingPlane["Stream Buffering & Watermarking"]
-        Ingest --> RingBuffer[("In-Memory Ring Buffer")]
-        RingBuffer --> Watermark["Watermark Generator (Event-Time Lag Filter)"]
-        Watermark -->|Late > Threshold| DLQ[("Dead-Letter Queue (DLQ)")]
-    end
-    
-    subgraph ComputePlane["Window Aggregation & CEP Engine"]
-        Watermark -->|Within Watermark| WindowEngine["Window Evaluator (Tumbling / Sliding)"]
-        WindowEngine --> Aggregator["Metric Reducer (Count, Sum, Avg, Min, Max, P99)"]
-        Watermark --> CEPEngine["CEP Pattern Matcher (Finite State Machine)"]
-    end
-    
-    subgraph StoragePlane["Persistence & Telemetry"]
-        Aggregator --> WindowStore[("MongoDB: Finalized Window Aggregations")]
-        CEPEngine --> AlertStore[("MongoDB: Detected CEP Alert Events")]
-        WindowStore & AlertStore --> Console[("React 18 Real-Time Stream Dashboard")]
-    end
-```
-
----
-
 ## 🚀 Key Architectural Capabilities
 
 1. **Event-Time Watermark Progression**: Handles network latency and out-of-order arrivals by generating monotonic watermarks ($W = \max(t_{event}) - \Delta_{lag}$), allowing deterministic stream processing without dropping valid late events.
